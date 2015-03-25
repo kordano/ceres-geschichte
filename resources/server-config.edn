@@ -1,8 +1,11 @@
 {:version 0.01      ;; currently deployed version
  :date "1970-01-01" ;; date of deployment
  :init? false ;; if the server runs for the first time, geschichte has to be initialized
- :geschichte {:fs-store "/opt/data" ;; konserve filesystem store
-              :user "kordano@topiq.es" ;; user name
+ :logging true
+ :log-db {:name "hera" :server-address "127.0.0.1"}
+ :geschichte {:fs-store "/opt/data/konserve" ;; konserve filesystem store
+              :user "eve@topiq.es" ;; user name
+              :socket "ws://127.0.0.1:31744" ;; repo socket
               :repo "tweet collection"} ;; repo name
  :twitter {:credentials ;; refer to twitter dev site
            {:consumer-key "????"

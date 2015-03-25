@@ -2,9 +2,13 @@
   (:require [hasch.core :refer [uuid]]
             [konserve.store :refer [new-mem-store]]
             [konserve.filestore :refer [new-fs-store]]
+            [gezwitscher.core :refer [start-filter-stream gezwitscher]]
             [konserve.protocols :refer [-get-in -assoc-in]]
             [geschichte.sync :refer [server-peer client-peer]]
+            [monger.core :as mg]
+            [monger.collection :as mc]
             [geschichte.stage :as s]
+            [clj-time.core :as t]
             [geschichte.p2p.fetch :refer [fetch]]
             [geschichte.p2p.hash :refer [ensure-hash]]
             [geschichte.realize :refer [commit-value]]
@@ -15,6 +19,15 @@
             [taoensso.timbre :as timbre]))
 
 (timbre/refer-timbre)
+
+(defn init-log-db [{:keys [name server-address]}]
+  (info "MONGODB - warming up ...")
+  (let [^MongoOptions opts (mg/mongo-options {:threads-allowed-to-block-for-connection-multiplier 300}) ;; TODO: better options handling
+        ^ServerAddress sa  (mg/server-address (or (System/getenv "DB_PORT_27017_TCP_ADDR") server-address "127.0.0.1") 27017)
+        name (or name "hera")
+        db (mg/get-db (mg/connect sa opts) name)]
+    (info "MONGODB - connected to" name "!")
+    db))
 
 (defn stop-peer [state]
   (stop (get-in @state [:geschichte :peer])))
@@ -43,7 +56,7 @@
                    (= name fn-name))
                  (keys eval-map))))
 
-(defn init [ & {:keys [user socket repo-name fs-store]}]
+(defn init [{:keys [user socket repo-name fs-store]}]
   (let [user (or user "kordano@topiq.es")
         socket (or socket "ws://127.0.0.1:31744")
         store (<!? (if fs-store
@@ -90,10 +103,13 @@
         master-head (first (get-in @stage [user repo :state :branches "master"]))]
     (<!? (commit-value store mapped-eval causal-order master-head))))
 
+
 (defn initialize-state
   "Initialize the server state using a given config file"
   [path]
-  (let [config (-> path slurp read-string)
+  (let [config (-> path slurp read-string
+                   (update-in [:log-db] init-log-db)
+                   (update-in [:geschichte] init))]
     (debug "STATE:" config)
     (atom config)))
 

@@ -14,6 +14,9 @@
                  [net.polyc0l0r/konserve "0.2.3"]
                  [net.polyc0l0r/geschichte "0.1.0-SNAPSHOT"]
 
+                 [clj-time "0.9.0"]
+                 [com.novemberain/monger "2.1.0"]
+
                  [aprint "0.1.3"]
 
                  [com.taoensso/timbre "3.4.0"]]
