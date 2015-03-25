@@ -94,7 +94,6 @@
   "Initialize the server state using a given config file"
   [path]
   (let [config (-> path slurp read-string)
-        _ nil (assoc :geschichte (init :user "kordano@topiq.es" :repo "tweet collection" :fs-store "/data/ceres/konserve")) ;; todo: into config file
     (debug "STATE:" config)
     (atom config)))
 
