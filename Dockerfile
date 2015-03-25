@@ -3,10 +3,10 @@ FROM ubuntu:latest
 # Update the APT cache
 RUN apt-get   update
 
-# Install and setup project dependencies
+# grab little helpers
 RUN apt-get install -y curl git wget unzip
 
-# prepare for Java download
+# grab java
 RUN apt-get install -y software-properties-common
 RUN apt-get -y install openjdk-7-jre-headless
 RUN apt-get install -y mongodb-clients
@@ -21,15 +21,17 @@ RUN chmod +x /usr/local/bin/lein
 ENV LEIN_ROOT yes
 RUN lein
 
-# grab geschichte
-
-# add scripts
+# grab scripts
 ADD ./resources /opt
+
+# grab geschichte
+RUN sh /opt/install-geschichte.sh
 
 # grab project
 RUN git clone https://github.com/kordano/ceres-geschichte.git /opt/ceres-geschichte
 
-# retrieve dependencies
+# grab dependencies
 RUN /opt/retrieve-deps
 
+# grab ass
 CMD ["/opt/start-ceres"]
