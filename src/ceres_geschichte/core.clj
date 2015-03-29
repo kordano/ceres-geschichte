@@ -19,7 +19,7 @@
 (timbre/refer-timbre)
 
 (defn init-log-db [dir]
-  (new-fs-store dir (atom {:commit-delays []})))
+  (<!? (new-fs-store dir)))
 
 (defn stop-peer [state]
   (stop (get-in @state [:geschichte :peer])))
