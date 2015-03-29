@@ -3,10 +3,8 @@
             [konserve.store :refer [new-mem-store]]
             [konserve.filestore :refer [new-fs-store]]
             [gezwitscher.core :refer [start-filter-stream gezwitscher]]
-            [konserve.protocols :refer [-get-in -assoc-in]]
+            [konserve.protocols :refer [-get-in -assoc-in -update-in]]
             [geschichte.sync :refer [server-peer client-peer]]
-            [monger.core :as mg]
-            [monger.collection :as mc]
             [geschichte.stage :as s]
             [clj-time.core :as t]
             [geschichte.p2p.fetch :refer [fetch]]
@@ -20,14 +18,8 @@
 
 (timbre/refer-timbre)
 
-(defn init-log-db [{:keys [name server-address]}]
-  (info "MONGODB - warming up ...")
-  (let [^MongoOptions opts (mg/mongo-options {:threads-allowed-to-block-for-connection-multiplier 300}) ;; TODO: better options handling
-        ^ServerAddress sa  (mg/server-address (or (System/getenv "DB_PORT_27017_TCP_ADDR") server-address "127.0.0.1") 27017)
-        name (or name "hera")
-        db (mg/get-db (mg/connect sa opts) name)]
-    (info "MONGODB - connected to" name "!")
-    db))
+(defn init-log-db [dir]
+  (new-fs-store dir (atom {:commit-delays []})))
 
 (defn stop-peer [state]
   (stop (get-in @state [:geschichte :peer])))
@@ -85,13 +77,11 @@
   "Transact incoming status to geschichte and commit"
   [state status]
   (let [{:keys [store peer stage repo user]} (get-in @state [:geschichte])
-        db (get-in @state [:log-db])]
+        log-konserve (get-in @state [:log-db])]
     (<!? (s/transact stage [user repo "master"] [[(find-fn 'transact-entry) [status]]]))
     (let [pre-time (System/currentTimeMillis)]
       (<!? (s/commit! stage {user {repo #{"master"}}}))
-      (mc/insert db "ctimes" {:time (- (System/currentTimeMillis) pre-time)
-                              :type "commit"
-                              :ts (t/now)}))
+      (<!? (-update-in log-konserve [:commit-delays] #(conj % {:duration (- (System/currentTimeMillis) pre-time)}))))
    state))
 
 
