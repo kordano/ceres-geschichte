@@ -109,7 +109,7 @@
   (let [state (initialize-state config-path)]
     (timbre/set-config! [:appenders :spit :enabled?] true)
     (timbre/set-config! [:shared-appender-config :spit-filename] (:logfile @state))
-    (let [{{:keys [follow track credentials]} :app} @state]
+    (let [{{:keys [follow track credentials]} :twitter} @state]
       (start-filter-stream follow track (fn [status] (transact-status state status)) credentials))
     (info "server started!")))
 
