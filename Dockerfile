@@ -33,5 +33,8 @@ RUN git clone https://github.com/kordano/ceres-geschichte.git /opt/ceres-geschic
 # grab dependencies
 RUN /opt/retrieve-deps
 
+# geschichte port -> better handling someday
+EXPOSE 31744
+
 # grab ass
 CMD ["/opt/start-ceres"]
