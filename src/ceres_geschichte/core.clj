@@ -14,7 +14,8 @@
             [geschichte.platform :refer [create-http-kit-handler! <!? start stop]]
             [clojure.core.async :refer [>!!]]
             [aprint.core :refer [aprint]]
-            [taoensso.timbre :as timbre]))
+            [taoensso.timbre :as timbre])
+  (:import [java.io DataOutputStream ByteArrayOutputStream]))
 
 (timbre/refer-timbre)
 
