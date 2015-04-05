@@ -18,7 +18,27 @@
 
 (timbre/refer-timbre)
 
-(defn init-log-db [dir]
+(defn setup-logging! [dir]
+  (def log-store (<!? (new-fs-store (str dir "/" (java.util.Date.)))))
+  (def log-counter (atom 0))
+
+  (timbre/set-config! [:appenders :standard-out :min-level] :debug)
+
+  (timbre/set-config! [:appenders :fs-store] {:doc "Simple file appender."
+                                              :min-level nil :enabled? true
+                                              :fn (fn [{:keys [ap-config] :as args}]
+                                                    (with-open [baos (ByteArrayOutputStream.)
+                                                                dos (DataOutputStream. baos)]
+                                                      (try
+                                                        (nippy/freeze-to-stream! dos (map (fn [a] (if (nippy/freezable? a) a (str a)))
+                                                                                          args))
+                                                        (<!? (-bassoc log-store (swap! log-counter inc) (.toByteArray baos)))
+                                                        (catch Exception e
+                                                          (.printStacktrace e)))))}))
+
+
+
+(defn setup-benchmark! [dir]
   (<!? (new-fs-store dir)))
 
 (defn stop-peer [state]
@@ -77,11 +97,11 @@
   "Transact incoming status to geschichte and commit"
   [state status]
   (let [{:keys [store peer stage repo user]} (get-in @state [:geschichte])
-        log-konserve (get-in @state [:log-db])]
+        k-benchmark (get-in @state [:k-benchmark])]
     (<!? (s/transact stage [user repo "master"] [[(find-fn 'transact-entry) [status]]]))
     (let [pre-time (System/currentTimeMillis)]
       (<!? (s/commit! stage {user {repo #{"master"}}}))
-      (<!? (-update-in log-konserve [:commit-delays] #(conj % {:duration (- (System/currentTimeMillis) pre-time)}))))
+      (<!? (-update-in k-benchmark [:commit-delays] #(conj % {:duration (- (System/currentTimeMillis) pre-time)}))))
    state))
 
 
@@ -107,8 +127,7 @@
 (defn -main [config-path & args]
   (info "warming up...")
   (let [state (initialize-state config-path)]
-    (timbre/set-config! [:appenders :spit :enabled?] true)
-    (timbre/set-config! [:shared-appender-config :spit-filename] (:logfile @state))
+    (setup-logging! (:k-log @state))
     (let [{{:keys [follow track credentials]} :twitter} @state]
       (start-filter-stream follow track (fn [status] (transact-status state status)) credentials))
     (info "server started!")))
@@ -117,8 +136,6 @@
 (comment
 
   (def state (initialize-state "resources/test-config.edn"))
-
-
 
   (let [{{:keys [follow track credentials]} :app} @state]
       (start-filter-stream follow track (fn [status] (transact-status state status)) credentials))
@@ -138,13 +155,6 @@
 
 
   (<!? (s/subscribe-repos! stage {user {repo #{"master"}}}))
-
-  (let [causal-order (get-in @stage [user repo :state :causal-order])
-        master-head (first (get-in @stage [user repo :state :branches "master"]))]
-    (-> (<!? (commit-value store mapped-eval causal-order master-head))
-        (get-in [:data])
-        count
-        time))
 
 
   )
