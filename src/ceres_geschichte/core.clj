@@ -1,4 +1,5 @@
 (ns ceres-geschichte.core
+  (:gen-class :main true)
   (:require [hasch.core :refer [uuid]]
             [konserve.store :refer [new-mem-store]]
             [konserve.filestore :refer [new-fs-store]]
@@ -139,6 +140,11 @@
   (let [{{:keys [follow track credentials]} :app} @state]
       (start-filter-stream follow track (fn [status] (transact-status state status)) credentials))
 
+  (def user "kordano@topiq.es")
+
+  (def repo #uuid "70464f6c-46d7-41a0-b6a4-1f4cc0fd4ec2")
+
+
   ;; client 1
   (def store (<!? (new-mem-store)))
 
@@ -146,12 +152,7 @@
 
   (def stage (<!? (s/create-stage! "kordano@topiq.es" peer eval)))
 
-  (<!? (s/connect! stage "ws://172.17.0.12:31744"))
-
-
-  (def user "kordano@topiq.es")
-
-  (def repo #uuid "c85db965-9adc-4256-a383-cb12f212b8b1")
+  (<!? (s/connect! stage "ws://archimedes:31744"))
 
 
   (<!? (s/subscribe-repos! stage {user {repo #{"master"}}}))
@@ -176,8 +177,6 @@
 
 
   (let [durations (map :duration (<!? (-get-in b-store [:commit-delays])))]
-    [(count durations)
-     ((comp float /) (reduce + durations)
-      (count durations))])
+    [(count durations)])
 
   )
