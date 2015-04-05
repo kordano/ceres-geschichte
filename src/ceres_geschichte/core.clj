@@ -7,7 +7,6 @@
             [konserve.protocols :refer [-get-in -assoc-in -update-in -bassoc]]
             [geschichte.sync :refer [server-peer client-peer]]
             [geschichte.stage :as s]
-            [clj-time.core :as t]
             [taoensso.nippy :as nippy]
             [geschichte.p2p.fetch :refer [fetch]]
             [geschichte.p2p.hash :refer [ensure-hash]]
@@ -25,7 +24,7 @@
   (def log-store (<!? (new-fs-store (str dir "/" (java.util.Date.)))))
   (def log-counter (atom 0))
 
-  (timbre/set-config! [:appenders :standard-out :min-level] :debug)
+  (timbre/set-config! [:appenders :standard-out :min-level] :error)
 
   (timbre/set-config! [:appenders :fs-store] {:doc "Simple file appender."
                                               :min-level nil :enabled? true
@@ -68,7 +67,7 @@
                    (= name fn-name))
                  (keys eval-map))))
 
-(defn init [{:keys [user socket repo-name fs-store]}]
+(defn init [{:keys [user socket repo-name fs-store init?]}]
   (let [user (or user "kordano@topiq.es")
         socket (or socket "ws://127.0.0.1:31744")
         store (<!? (if fs-store
@@ -84,8 +83,9 @@
         stage (<!? (s/create-stage! user peer-server eval))
         _ (<!? (s/connect! stage socket))
         r-id (<!? (s/create-repo! stage (or repo-name "tweets collection")))]
-    (<!? (s/transact stage [user r-id "master"] [[(find-fn 'init) "mem"]]))
-    (<!? (s/commit! stage {user {r-id #{"master"}}})) ;; master branch
+    (when init?
+      (<!? (s/transact stage [user r-id "master"] [[(find-fn 'init) "mem"]]))
+      (<!? (s/commit! stage {user {r-id #{"master"}}}))) ;; master branch
     {:store store
      :peer peer-server
      :stage stage
@@ -142,8 +142,7 @@
 
   (def user "kordano@topiq.es")
 
-  (def repo #uuid "70464f6c-46d7-41a0-b6a4-1f4cc0fd4ec2")
-
+  (def repo #uuid "5fee7572-8083-453e-8e51-0f08087cefac")
 
   ;; client 1
   (def store (<!? (new-mem-store)))
@@ -152,7 +151,7 @@
 
   (def stage (<!? (s/create-stage! "kordano@topiq.es" peer eval)))
 
-  (<!? (s/connect! stage "ws://archimedes:31744"))
+  (<!? (s/connect! stage "ws://deimos:31744"))
 
 
   (<!? (s/subscribe-repos! stage {user {repo #{"master"}}}))
@@ -178,5 +177,7 @@
 
   (let [durations (map :duration (<!? (-get-in b-store [:commit-delays])))]
     [(count durations)])
+
+  (timbre/set-config! [:appenders :standard-out :min-level] :error)
 
   )

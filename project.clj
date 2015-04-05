@@ -14,12 +14,14 @@
                  [net.polyc0l0r/konserve "0.2.3"]
                  [net.polyc0l0r/geschichte "0.1.0-SNAPSHOT"]
 
-                 [clj-time "0.9.0"]
-                 [com.novemberain/monger "2.1.0"]
+                 [gorilla-repl "0.3.4" :exclusions [http-kit]]
+                 [geschichte-gorilla "0.1.0-SNAPSHOT"]
 
                  [aprint "0.1.3"]
                  [com.taoensso/nippy "2.8.0"]
                  [com.taoensso/timbre "3.4.0" :exclusions [com.taoensso/encore]]]
+
+  :plugins [[lein-gorilla "0.3.4"]]
 
   :main ceres-geschichte.core
 
