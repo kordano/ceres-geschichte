@@ -7,6 +7,7 @@
             [geschichte.sync :refer [server-peer client-peer]]
             [geschichte.stage :as s]
             [clj-time.core :as t]
+            [taoensso.nippy :as nippy]
             [geschichte.p2p.fetch :refer [fetch]]
             [geschichte.p2p.hash :refer [ensure-hash]]
             [geschichte.realize :refer [commit-value]]
