@@ -139,21 +139,45 @@
   (let [{{:keys [follow track credentials]} :app} @state]
       (start-filter-stream follow track (fn [status] (transact-status state status)) credentials))
 
+  ;; client 1
   (def store (<!? (new-mem-store)))
 
   (def peer (client-peer "archimedes" store (comp (partial fetch store) ensure-hash)))
 
   (def stage (<!? (s/create-stage! "kordano@topiq.es" peer eval)))
 
-  (<!? (s/connect! stage "ws://127.0.0.1:31744"))
+  (<!? (s/connect! stage "ws://172.17.0.12:31744"))
 
 
   (def user "kordano@topiq.es")
 
-  (def repo #uuid "ac87a592-1d10-471e-87d3-2f3ad9518129")
+  (def repo #uuid "c85db965-9adc-4256-a383-cb12f212b8b1")
 
 
   (<!? (s/subscribe-repos! stage {user {repo #{"master"}}}))
 
+  ;; client 2
+  (def store-2 (<!? (new-mem-store)))
+
+  (def peer-2 (client-peer "archimedes" store-2 (comp (partial fetch store-2) ensure-hash)))
+
+  (def stage-2 (<!? (s/create-stage! "kordano@topiq.es" peer-2 eval)))
+
+  (<!? (s/connect! stage-2 "ws://172.17.0.12:31744"))
+
+  (<!? (s/subscribe-repos! stage-2 {user {repo #{"master"}}}))
+
+
+
+
+
+
+  (def b-store (<!? (new-fs-store "/opt/data/ceres-geschichte/k-benchmark")))
+
+
+  (let [durations (map :duration (<!? (-get-in b-store [:commit-delays])))]
+    [(count durations)
+     ((comp float /) (reduce + durations)
+      (count durations))])
 
   )
