@@ -3,7 +3,7 @@
             [konserve.store :refer [new-mem-store]]
             [konserve.filestore :refer [new-fs-store]]
             [gezwitscher.core :refer [start-filter-stream gezwitscher]]
-            [konserve.protocols :refer [-get-in -assoc-in -update-in]]
+            [konserve.protocols :refer [-get-in -assoc-in -update-in -bassoc]]
             [geschichte.sync :refer [server-peer client-peer]]
             [geschichte.stage :as s]
             [clj-time.core :as t]
@@ -39,9 +39,6 @@
                                                           (.printStacktrace e)))))}))
 
 
-
-(defn setup-benchmark! [dir]
-  (<!? (new-fs-store dir)))
 
 (defn stop-peer [state]
   (stop (get-in @state [:geschichte :peer])))
@@ -120,7 +117,7 @@
   "Initialize the server state using a given config file"
   [path]
   (let [config (-> path slurp read-string
-                   (update-in [:log-db] init-log-db)
+                   (update-in [:k-benchmark] #(<!? (new-fs-store %)))
                    (update-in [:geschichte] init))]
     (debug "STATE:" config)
     (atom config)))

@@ -18,7 +18,7 @@
                  [com.novemberain/monger "2.1.0"]
 
                  [aprint "0.1.3"]
-                 [com.taoensso/nippy "2.7.1"]
+                 [com.taoensso/nippy "2.8.0"]
                  [com.taoensso/timbre "3.4.0" :exclusions [com.taoensso/encore]]]
 
   :main ceres-geschichte.core
